@@ -64,19 +64,10 @@ def _validate_string_sequence(
 
     cleaned: list[str] = []
     for idx, value in enumerate(values):
-        candidate = value
         if require_uri:
-            candidate = _require_uri(candidate, field=f"{name}[{idx}]")
+            candidate = _require_uri(value, field=f"{name}[{idx}]")
         else:
-            if not isinstance(value, str) or not value:
-                raise JRDValidationError(
-                    f"{name} must contain only non-empty strings (item {idx} was {value!r})."
-                )
-            if value != value.strip():
-                raise JRDValidationError(
-                    f"{name}[{idx}] must not contain leading or trailing whitespace."
-                )
-            candidate = value
+            candidate = _require_string(value, field=f"{name}[{idx}]")
         if require_language_tag:
             candidate = _require_language_tag(candidate, field=f"{name}[{idx}]")
         cleaned.append(candidate)
