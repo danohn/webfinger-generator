@@ -64,17 +64,19 @@ def _validate_string_sequence(
 
     cleaned: list[str] = []
     for idx, value in enumerate(values):
-        if not isinstance(value, str) or not value:
-            raise JRDValidationError(
-                f"{name} must contain only non-empty strings (item {idx} was {value!r})."
-            )
-        if value != value.strip():
-            raise JRDValidationError(
-                f"{name}[{idx}] must not contain leading or trailing whitespace."
-            )
         candidate = value
         if require_uri:
             candidate = _require_uri(candidate, field=f"{name}[{idx}]")
+        else:
+            if not isinstance(value, str) or not value:
+                raise JRDValidationError(
+                    f"{name} must contain only non-empty strings (item {idx} was {value!r})."
+                )
+            if value != value.strip():
+                raise JRDValidationError(
+                    f"{name}[{idx}] must not contain leading or trailing whitespace."
+                )
+            candidate = value
         if require_language_tag:
             candidate = _require_language_tag(candidate, field=f"{name}[{idx}]")
         cleaned.append(candidate)
@@ -321,7 +323,6 @@ class JRD:
                     )
                 cleaned[key] = value
             self.additional_members = cleaned
-
 
     def to_dict(self) -> dict[str, Any]:
         """Convert the descriptor into a dictionary."""
