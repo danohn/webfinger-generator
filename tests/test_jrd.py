@@ -111,6 +111,60 @@ def test_link_href_must_be_uri() -> None:
         Link(rel="self", href="not a uri")
 
 
+def test_link_rel_must_be_registered_type_or_uri() -> None:
+    with pytest.raises(JRDValidationError):
+        Link(rel="invalid relation", href="https://example.com")
+
+
+def test_link_rel_accepts_uri_relation_type() -> None:
+    link = Link(rel="https://example.com/rel", href="https://example.com")
+
+    assert link.rel == "https://example.com/rel"
+
+
+def test_link_type_must_be_media_type() -> None:
+    with pytest.raises(JRDValidationError):
+        Link(rel="self", href="https://example.com", type="invalid")
+
+
+def test_link_titles_keys_must_be_language_tags() -> None:
+    with pytest.raises(JRDValidationError):
+        Link(
+            rel="self",
+            href="https://example.com",
+            titles={"123": "Invalid"},
+        )
+
+
+def test_link_titles_accept_und_language_tag() -> None:
+    link = Link(
+        rel="self",
+        href="https://example.com",
+        titles={"und": "Fallback"},
+    )
+
+    assert link.titles == {"und": "Fallback"}
+
+
+def test_hreflang_values_must_be_language_tags() -> None:
+    with pytest.raises(JRDValidationError):
+        Link(
+            rel="self",
+            href="https://example.com",
+            hreflang=["not a tag"],
+        )
+
+
+def test_hreflang_accepts_language_tags() -> None:
+    link = Link(
+        rel="self",
+        href="https://example.com",
+        hreflang=["en", "fr-CA"],
+    )
+
+    assert link.hreflang == ("en", "fr-CA")
+
+
 def test_expires_string_must_be_rfc3339() -> None:
     with pytest.raises(JRDValidationError):
         JRD(subject="acct:dan@example.com", expires="2024-01-01T12:30:00")
