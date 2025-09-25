@@ -13,9 +13,33 @@ def test_link_href_and_template_are_mutually_exclusive() -> None:
         Link(rel="self", href="https://example.com", template="https://example.com/{uri}")
 
 
-def test_jrd_requires_content() -> None:
+def test_jrd_requires_subject() -> None:
     with pytest.raises(JRDValidationError):
-        JRD()
+        JRD(subject="")
+
+
+def test_subject_must_be_uri() -> None:
+    with pytest.raises(JRDValidationError):
+        JRD(subject="not-a-uri")
+
+
+def test_aliases_must_be_uris() -> None:
+    with pytest.raises(JRDValidationError):
+        JRD(subject="acct:carol@example.com", aliases=["not-a-uri"])
+
+
+def test_property_keys_must_be_uris() -> None:
+    with pytest.raises(JRDValidationError):
+        JRD(subject="acct:carol@example.com", properties={"name": "Alice"})
+
+
+def test_property_values_may_be_null() -> None:
+    descriptor = JRD(
+        subject="acct:alice@example.com",
+        properties={"https://example.com/schema/pronouns": None},
+    )
+
+    assert descriptor.to_dict()["properties"]["https://example.com/schema/pronouns"] is None
 
 
 def test_jrd_to_dict_round_trip() -> None:
@@ -62,6 +86,37 @@ def test_generate_jrd_accepts_mappings_for_links() -> None:
     assert payload["links"] == [{"rel": "self", "href": "https://example.com/bob"}]
 
 
+def test_link_property_values_may_be_null() -> None:
+    link = Link(
+        rel="self",
+        href="https://example.com/alice",
+        properties={"https://example.com/schema/pronouns": None},
+    )
+
+    assert link.to_dict()["properties"]["https://example.com/schema/pronouns"] is None
+
+
 def test_alias_validation_rejects_empty_strings() -> None:
     with pytest.raises(JRDValidationError):
         JRD(subject="acct:carol@example.com", aliases=[""])
+
+
+def test_link_requires_href_or_template() -> None:
+    with pytest.raises(JRDValidationError):
+        Link(rel="self")
+
+
+def test_link_href_must_be_uri() -> None:
+    with pytest.raises(JRDValidationError):
+        Link(rel="self", href="not a uri")
+
+
+def test_expires_string_must_be_rfc3339() -> None:
+    with pytest.raises(JRDValidationError):
+        JRD(subject="acct:dan@example.com", expires="2024-01-01T12:30:00")
+
+
+def test_minimal_jrd_serialises_subject_only() -> None:
+    descriptor = JRD(subject="acct:erin@example.com")
+
+    assert descriptor.to_dict() == {"subject": "acct:erin@example.com"}
